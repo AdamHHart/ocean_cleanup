@@ -34,12 +34,20 @@ class Boat {
       gltf.scene.rotation.y = 1.5
 
       this.boat = gltf.scene
+      this.speed = {
+        vel: 0,
+        rot: 0
+      }
     })
+  }
+  stop(){
+    this.speed.vel = 0
+    this.speed.rot = 0
   }
   update( ){
     if(this.boat){
-      this.boat.rotation.y += 0.01
-      this.boat.position.z += -0.01
+      this.boat.rotation.y += this.speed.rot
+      this.boat.translateX(this.speed.vel)
     }
   }
 }
@@ -158,6 +166,24 @@ function init() {
 
   window.addEventListener("resize", onWindowResize);
 }
+
+window.addEventListener("keydown", function(e){
+  if(e.key == "ArrowUp"){
+    boat.speed.vel = 0.4
+  }
+  if(e.key == "ArrowDown"){
+    boat.speed.vel = -0.4
+  }
+  if(e.key == "ArrowRight"){
+    boat.speed.rot = -0.05
+  }
+  if(e.key == "ArrowLeft"){
+    boat.speed.rot = +0.05
+  }
+})
+window.addEventListener("keyup", function(e){
+  boat.stop()
+})
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
