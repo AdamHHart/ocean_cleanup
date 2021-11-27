@@ -16,13 +16,35 @@ let controls, water, sun;
 
 const loader = new GLTFLoader();
 
-loader.load("assets/boat/scene.gltf",function(gltf){
-  console.log(gltf)
-  scene.add(gltf.scene)
-  gltf.scene.position.set(5,13,45)
-  gltf.scene.scale.set(3,3,3)
-  gltf.scene.rotation.y = 1.5
-})
+// loader.load("assets/boat/scene.gltf",function(gltf){
+//   console.log(gltf)
+//   scene.add(gltf.scene)
+//   gltf.scene.position.set(5,13,45)
+//   gltf.scene.scale.set(3,3,3)
+//   gltf.scene.rotation.y = 1.5
+// })
+
+class Boat {
+  constructor(){
+    loader.load("assets/boat/scene.gltf",(gltf) => {
+      console.log(gltf)
+      scene.add(gltf.scene)
+      gltf.scene.position.set(5,13,45)
+      gltf.scene.scale.set(3,3,3)
+      gltf.scene.rotation.y = 1.5
+
+      this.boat = gltf.scene
+    })
+  }
+  update( ){
+    if(this.boat){
+      this.boat.rotation.y += 0.01
+      this.boat.position.z += -0.01
+    }
+  }
+}
+
+const boat = new Boat()
 
 init();
 animate();
@@ -147,6 +169,7 @@ function onWindowResize() {
 function animate() {
   requestAnimationFrame(animate);
   render();
+  boat.update()
 }
 
 function render() {
