@@ -16,13 +16,9 @@ let controls, water, sun;
 
 const loader = new GLTFLoader();
 
-// loader.load("assets/boat/scene.gltf",function(gltf){
-//   console.log(gltf)
-//   scene.add(gltf.scene)
-//   gltf.scene.position.set(5,13,45)
-//   gltf.scene.scale.set(3,3,3)
-//   gltf.scene.rotation.y = 1.5
-// })
+function random(min, max) {
+  return Math.random() * (max - min) + min;
+}
 
 class Boat {
   constructor(){
@@ -40,11 +36,13 @@ class Boat {
       }
     })
   }
+
   stop(){
     this.speed.vel = 0
     this.speed.rot = 0
   }
-  update( ){
+
+  update(){
     if(this.boat){
       this.boat.rotation.y += this.speed.rot
       this.boat.translateX(this.speed.vel)
@@ -55,21 +53,50 @@ class Boat {
 const boat = new Boat()
 
 class Trash{
-  constructor(){
-    loader.load("assets/garbage_bag/scene.gltf",(gltf) => {
-      scene.add(gltf.scene)
-      gltf.scene.scale.set(1.5,1.5,1.5)
-      gltf.scene.position(0,-0.5,0)
-    })
+  constructor(_scene){
+    
+      scene.add(_scene)
+      _scene.scale.set(1.5,1.5,1.5)
+      if(Math.random() > .6){
+        _scene.position.set(random(-100, 100), -.5, random(-100, 100))
+      }else{
+        _scene.position.set(random(-500, 500), -.5, random(-1000, 1000))
+      }
+      this.trash = _scene
   }
 }
 
-let trash = new Trash()
+async function loadModel(url){
+  return new Promise((resolve,reject) => {
+    loader.load(url, (gltf) => {
+      resolve(gltf.scene)
+    })
+  })
+}
+let boatModel = null
+async function createTrash() {
+  if(!boatModel) {
+    boatModel = await loadModel("assets/garbage_bag/scene.gltf")
+  }
+  return new Trash(boatModel.clone())
+}
+
+// createTrash().then(trash => {
+//   console.log(trash)
+// })
+
+// setTimeout(() => {
+
+// }, 1000)
+let trashes = []
+const trashCount = 50
+
+// let trash = new Trash()
 
 init();
 animate();
 
-function init() {
+async function init() {
 
 
   renderer = new THREE.WebGLRenderer();
@@ -157,28 +184,17 @@ function init() {
   controls.maxDistance = 200.0;
   controls.update();
 
-
-  // // GUI
-
-  // const gui = new GUI();
-
-  // const folderSky = gui.addFolder("Sky");
-  // folderSky.add(parameters, "elevation", 0, 90, 0.1).onChange(updateSun);
-  // folderSky.add(parameters, "azimuth", -180, 180, 0.1).onChange(updateSun);
-  // folderSky.open();
-
   const waterUniforms = water.material.uniforms;
 
-  // const folderWater = gui.addFolder("Water");
-  // folderWater
-  //   .add(waterUniforms.distortionScale, "value", 0, 8, 0.1)
-  //   .name("distortionScale");
-  // folderWater.add(waterUniforms.size, "value", 0.1, 10, 0.1).name("size");
-  // folderWater.open();
 
-  window.addEventListener("resize", onWindowResize);
 }
 
+for(let i = 0; i < trashCount; i++){
+  const trash = await createTrash()
+  trashes.push(trash)
+}
+  window.addEventListener("resize", onWindowResize);
+  
 window.addEventListener("keydown", function(e){
   if(e.key == "ArrowUp"){
     boat.speed.vel = 0.4
@@ -204,10 +220,32 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+
+function isColliding(obj1, obj2){
+  return(
+    Math.abs(obj1.position.x - obj2.position.x) < 15 && 
+    Math.abs(obj1.position.z - obj2.position.z) < 15
+  )
+}
+
+function checkCollisions(){
+  if(boat.boat){
+    trashes.forEach(trash => {
+      if(trash.trash){
+        if(isColliding(boat.boat, trash.trash)){
+          scene.remove(trash.trash)
+        }
+      }
+    })
+  }
+}
+
 function animate() {
   requestAnimationFrame(animate);
   render();
   boat.update()
+  
+  checkCollisions()
 }
 
 function render() {
